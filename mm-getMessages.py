@@ -8,7 +8,7 @@ import os
 import requests
 import traceback
 
-# Mattermost server access token required
+# Mattermost server personal access token required
 mm_token = os.environ['MM_PAT']
 
 # Collective Sense Commons Mattermost Team 'Agora' ID
@@ -28,9 +28,10 @@ def mm_channel_id(ch_name, mm_teamid, mm_token):
         headers={'Authorization': f'Bearer {mm_token}'}
     )
     data = r.json()
+    ch_id = []
     for i in range(len(data)):
         if ch_name in data[i].get('display_name').casefold():
-            ch_id = [data[i].get('id'), data[i].get('display_name')]
+            ch_id = [ data[i].get('id'), data[i].get('display_name') ]
             print("* Found channel: ", ch_name,  data[i].get('id'), " ", data[i].get('display_name'))
     return ch_id
 
@@ -59,13 +60,16 @@ def main():
     ur = {}
     try:
         cid = mm_channel_id(ch_name, mm_teamid, mm_token)
-        print("** Usernames and messages from channel: ", cid[1], '\n')
-        
-        data = mm_channel_posts(cid[0], mm_token)
-        for p in data["posts"].values():
-            if p["user_id"] not in ur.keys():
-                ur[p["user_id"]] = mm_user_record(p["user_id"], mm_token)
-            print(ur[p["user_id"]].get("username"), ": ", p["message"], '\n')
+        print(len(cid))
+        if len(cid) == 0:
+            print("*__ No channel name matches ", ch_name, '\n')
+        else:
+            print("** Usernames and messages from channel: ", cid[1], '\n')
+            data = mm_channel_posts(cid[0], mm_token)
+            for p in data["posts"].values():
+                if p["user_id"] not in ur.keys():
+                    ur[p["user_id"]] = mm_user_record(p["user_id"], mm_token)
+                print(ur[p["user_id"]].get("username"), ": ", p["message"], '\n')
 
     except Exception as e:
         traceback.print_exc(e)
